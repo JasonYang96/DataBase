@@ -1,28 +1,100 @@
 #include "MultiMap.h"
 using namespace std;
 
-bool MultiMap::Iterator::valid() const
-{
-	return m_valid;
-}
+//Iterator Implementation
 
 bool MultiMap::Iterator::next()
 {
 	if (!valid())
 		return false;
 
-	if (!m_cur)
+	//check if any more duplicates
+	if (m_duplicate != nullptr || m_duplicate->m_next != nullptr)
 	{
-		m_valid = false;
-		return false;
+		m_duplicate = m_duplicate->m_next;
+	}
+	//check if any right node
+	else if (m_cur->m_right != nullptr)
+	{
+		m_cur = m_cur->m_right;
+		//check if any left node
+		if (m_cur->m_left != nullptr)
+		{
+			//go to left most node
+			while (m_cur->m_left != nullptr)
+			{
+				m_cur = m_cur->m_left;
+			}
+		}
+	}
+	//go to ancestor node
+	else
+	{
+		while (m_cur->m_parent->m_left != m_cur)
+		{
+			m_cur = m_cur->m_parent;
+
+			//when m_cur == nullptr, iterator has
+			//gone through the whole tree
+			if (!m_cur)
+			{
+				m_valid = false;
+				return false;
+			}
+		}
+
+		//m_cur is now on node before next node
+		m_cur = m_cur->m_parent;
 	}
 
 	return true;
 }
 
-void MultiMap::clear()
+bool MultiMap::Iterator::prev()
 {
-	FreeTree(m_root);
+	if (!valid())
+		return false;
+
+	//check if any more duplicates
+	if (m_duplicate != nullptr || m_duplicate->m_prev != nullptr)
+	{
+		m_duplicate = m_duplicate->m_prev;
+	}
+	//check if any left node
+	else if (m_cur->m_left != nullptr)
+	{
+		m_cur = m_cur->m_left;
+		//check if any right node
+		if (m_cur->m_right != nullptr)
+		{
+			//go to right most node
+			while (m_cur->m_right != nullptr)
+			{
+				m_cur = m_cur->m_right;
+			}
+		}
+	}
+	//go to ancestor node
+	else
+	{
+		while (m_cur->m_parent->m_right != m_cur)
+		{
+			m_cur = m_cur->m_parent;
+
+			//when m_cur == nullptr, iterator has
+			//gone through the whole tree
+			if (!m_cur)
+			{
+				m_valid = false;
+				return false;
+			}
+		}
+
+		//m_cur is now on node before next node
+		m_cur = m_cur->m_parent;
+	}
+
+	return true;
 }
 
 void MultiMap::insert(string key, unsigned int value)
@@ -38,13 +110,12 @@ void MultiMap::insert(string key, unsigned int value)
 	{
 		if (key == cur->m_key)
 		{
-			ValueNode* duplicate = new ValueNode(value);
 			ValueNode* temp = cur->m_duplicates;
 			while (temp)
 			{
-				temp = temp->next;
+				temp = temp->m_next;
 			}
-			temp = duplicate;
+			temp = new ValueNode(value);
 
 		}
 		else if (key < cur->m_key)
