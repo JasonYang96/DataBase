@@ -6,64 +6,6 @@
 class	MultiMap
 {
 private:
-	class Node;
-	class ValueNode;
-public:	
-	class	Iterator
-	{
-	public:
-		Iterator()
-		{
-			m_cur = nullptr;
-			m_valid = false;
-		}
-		Iterator(Node* root)
-		{
-			m_cur = root;
-			if (root)
-				m_valid = true;
-			else
-				m_valid = false;
-		}
-
-		//accessors
-		std::string	 getKey()	const { return m_cur->m_key; }
-		unsigned int getValue()	const { return m_cur->m_value; }
-		bool		 valid()    const { return m_valid; }
-
-		//mutators
-		bool next();
-		bool prev();
-
-	private:
-		Node*      m_cur;
-		ValueNode* m_duplicate;
-		bool	   m_valid;
-	};
-
-	MultiMap()
-	{
-		m_root = nullptr;
-	}
-	~MultiMap()
-	{
-		clear();
-		delete m_root;
-	}
-	void	clear() { FreeTree(m_root); }
-	void	insert(std::string	key, unsigned	int	value);
-	Iterator	findEqual(std::string	key)	const;
-	Iterator	findEqualOrSuccessor(std::string	key)	const;
-	Iterator	findEqualOrPredecessor(std::string	key)	const;
-
-private:
-	//	To	prevent	Multimaps	from	being	copied	or	assigned,	declare	these	members	
-	//	private	and	do	not	implement	them.	
-	MultiMap(const	MultiMap&	other);
-	MultiMap&	operator=(const	MultiMap&	rhs);
-
-	Node* m_root;
-
 	struct ValueNode
 	{
 		ValueNode(unsigned int value)
@@ -72,6 +14,7 @@ private:
 			m_next = nullptr;
 			m_prev = nullptr;
 		}
+		~ValueNode() {};
 
 		unsigned int m_value;
 		ValueNode* m_next;
@@ -83,18 +26,17 @@ private:
 		Node(std::string Key, unsigned int Value)
 		{
 			m_key = Key;
-			m_value = Value;
 			m_left = nullptr;
 			m_right = nullptr;
 			m_parent = nullptr;
-			m_duplicates = nullptr;
+			m_duplicates = new ValueNode(Value);
 		}
 		~Node()
 		{
 			if (m_duplicates)
 			{
 				ValueNode* cur = m_duplicates;
-				while (!m_duplicates)
+				while (cur)
 				{
 					ValueNode* temp = cur;
 					cur = m_duplicates->m_next;
@@ -104,12 +46,70 @@ private:
 		}
 
 		std::string  m_key;
-		unsigned int m_value;
 		Node* m_left;
 		Node* m_right;
 		Node* m_parent;
 		ValueNode* m_duplicates;
 	};
+
+public:	
+	class	Iterator
+	{
+	public:
+		Iterator()
+		{
+			m_cur = nullptr;
+			m_ValueNode = nullptr;
+		}
+		Iterator(Node* node)
+		{
+			m_cur = node;
+			m_ValueNode = node->m_duplicates;
+		}
+
+		//accessors
+		std::string	 getKey()		 const { return m_cur->m_key; }
+		unsigned int getValue()		 const;
+		bool		 valid()		 const;
+
+		//mutators
+		bool next();
+		bool prev();
+
+	private:
+		Node*      m_cur;
+		ValueNode* m_ValueNode;
+	};
+
+	MultiMap()
+	{
+		m_root = nullptr;
+		isBegin = true;
+		isEnd = true;
+	}
+	~MultiMap()
+	{
+		clear();
+		delete m_root;
+	}
+
+	//mutators
+	void	clear() { FreeTree(m_root); }
+	void	insert(std::string	key, unsigned	int	value);
+
+	//accessors
+	Iterator	findEqual(std::string	key)	const;
+	Iterator	findEqualOrSuccessor(std::string	key)	const;
+	Iterator	findEqualOrPredecessor(std::string	key)	const;
+
+private:
+	//	To	prevent	Multimaps	from	being	copied	or	assigned,	declare	these	members	
+	//	private	and	do	not	implement	them.	
+	MultiMap(const	MultiMap&	other);
+	MultiMap&	operator=(const	MultiMap&	rhs);
+	Node* m_root;
+	bool isBegin;
+	bool isEnd;
 
 	void FreeTree(Node* root)
 	{
