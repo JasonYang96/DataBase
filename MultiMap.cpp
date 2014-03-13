@@ -231,20 +231,21 @@ MultiMap::Iterator	MultiMap::findEqualOrSuccessor(string key) const
 	Iterator next;
 	while (temp.valid())
 	{
-		//checking next Node
-		temp.next();
-		if (temp.valid())
+		if (temp.getKey() == key)
 		{
-			next = temp;
-			temp.prev();
-		}
-		else
-		{
-			Iterator invalid;
-			return invalid;
-		}
-		if (next.valid() && temp.getKey() == key)
-		{
+			//checking next Node
+			temp.next();
+			if (temp.valid())
+			{
+				next = temp;
+				temp.prev();
+			}
+			//reached end of map so Successor does not exist in map
+			else
+			{
+				Iterator invalid;
+				return invalid;
+			}
 			//checking prev Node
 			temp.prev();
 			if (temp.valid())
@@ -277,9 +278,19 @@ MultiMap::Iterator	MultiMap::findEqualOrSuccessor(string key) const
 		else if (key < temp.getKey())
 		{
 			Iterator after = temp;
+			//checking prev Node
 			temp.prev();
-			//make sure return predecesor
-			if (temp.getKey() < key)
+			if (temp.valid())
+			{
+				prev = temp;
+				//make sure return succesor
+				if (temp.getKey() < key)
+				{
+					return after;
+				}
+			}
+			//reached beginning of map, so min must be first node
+			else
 			{
 				return after;
 			}
@@ -298,20 +309,21 @@ MultiMap::Iterator MultiMap::findEqualOrPredecessor(string key)	const
 	Iterator next;
 	while (temp.valid())
 	{
-		//checking next Node
-		temp.next();
-		if (temp.valid())
-		{
-			next = temp;
-			temp.prev();
-		}
-		else
-		{
-			temp = next;
-			return temp;
-		}
 		if (temp.getKey() == key)
 		{
+			//checking next Node
+			temp.next();
+			if (temp.valid())
+			{
+				next = temp;
+				temp.prev();
+			}
+			//reached nullptr, or end, so return temp
+			else
+			{
+				temp = next;
+				return temp;
+			}
 			//make sure last ValueNode*
 			if (next.valid() && temp.getKey() == next.getKey())
 			{
@@ -324,29 +336,38 @@ MultiMap::Iterator MultiMap::findEqualOrPredecessor(string key)	const
 		{
 			Iterator before = temp;
 			temp.next();
-			//make sure return predecessor
-			if (temp.getKey() > key)
+			if (temp.valid())
 			{
-				return before;
+				//make sure return predecessor
+				if (temp.getKey() > key)
+				{
+					return before;
+				}
+			}
+			//reached nullptr, or end, so return temp
+			else
+			{
+				temp = next;
+				return temp;
 			}
 		}
 		else if (key < temp.getKey())
 		{
 			//check prev ValueNode*
+			prev = temp;
 			temp.prev();
 			if (temp.valid())
 			{
-				prev = temp;
-				temp.next();
+				if (key > temp.getKey())
+				{
+					return temp;
+				}
 			}
+			//max is < minimum node, so not in multimap
 			else
 			{
 				Iterator invalid;
 				return invalid;
-			}
-			if (temp.getKey() < key)
-			{
-				return prev;
 			}
 		}
 	}
