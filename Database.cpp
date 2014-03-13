@@ -1,4 +1,7 @@
 #include "Database.h"
+#include "http.h"
+#include "Tokenizer.h"
+#include <fstream>
 #include <string>
 using namespace std;
 
@@ -85,12 +88,140 @@ bool Database::addRow(const	vector<string>&	rowOfData)
 
 bool Database::loadFromURL(string url)
 {
-	return false;
+	string page;
+	if (HTTP().get(url, page))
+	{
+		Tokenizer t(page, ",\n");
+		string nextToken;
+		int pageCount = -1;
+		bool noSchema = true;
+		vector<string> row;
+		vector<FieldDescriptor> schema;
+		while (t.getNextToken(nextToken))
+		{
+			pageCount += nextToken.size() + 1;
+
+			//creating schema
+			if (noSchema)
+			{
+				bool indexed = false;
+				//checking if needs index
+				if (nextToken[nextToken.size() - 1] == '*')
+				{
+					indexed = true;
+					nextToken = nextToken.substr(0, nextToken.size() - 1);
+				}
+
+				//creating Field Descriptor
+				FieldDescriptor fd;
+				fd.name = nextToken;
+				if (indexed)
+					fd.index = IndexType::it_indexed;
+				else
+					fd.index = IndexType::it_none;
+				
+				schema.push_back(fd);
+			}
+			//creating a row
+			else
+			{
+				row.push_back(nextToken);
+			}
+
+			//tokenized one row
+			if (page[pageCount] == '\n')
+			{
+				//first '\n' means done with schema
+				if (noSchema)
+				{
+					if (specifySchema(schema))
+						noSchema = false;
+					else
+						return false;
+				}
+				//else all of these are rows now
+				else
+				{
+					if(addRow(row))
+						row.clear();
+					else 
+						return false;
+				}
+			}
+		}
+		return true;
+	}
+	else
+		return false;
 }
 
 bool Database::loadFromFile(string filename)
 {
-	return false;
+	ifstream page(filename);
+	//checking if loading failed
+	if (!page)
+		return false;
+
+	//loading schema and rows
+	bool noSchema = true;
+	vector<string> row;
+	vector<FieldDescriptor> schema;
+	int count = 0;
+	while (page)
+	{
+		count++;
+		string s;
+		getline(page, s);
+		Tokenizer t(s, ",\n");
+		string nextToken;
+		while (t.getNextToken(nextToken))
+		{
+			//creating schema
+			if (noSchema)
+			{
+				bool indexed = false;
+				//checking if needs index
+				if (nextToken[nextToken.size() - 1] == '*')
+				{
+					indexed = true;
+					nextToken = nextToken.substr(0, nextToken.size() - 1);
+				}
+
+				//creating Field Descriptor
+				FieldDescriptor fd;
+				fd.name = nextToken;
+				if (indexed)
+					fd.index = IndexType::it_indexed;
+				else
+					fd.index = IndexType::it_none;
+
+				schema.push_back(fd);
+			}
+			//creating a row
+			else
+			{
+				row.push_back(nextToken);
+			}
+		}
+		//first '\n' means done with schema
+		if (noSchema)
+		{
+			if (specifySchema(schema))
+				noSchema = false;
+			else
+				return false;
+		}
+		//else all of these are rows now
+		else
+		{
+			if (addRow(row))
+				row.clear();
+			else
+				return false;
+		}
+	}
+
+	return true;
 }
 
 bool Database::getRow(int rowNum, vector<string>& row)	const
