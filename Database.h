@@ -1,3 +1,6 @@
+#ifndef DATABASE
+#define DATABASE
+
 #include "MultiMap.h"
 #include <string>
 #include <vector>
@@ -35,7 +38,7 @@ public:
 	bool	addRow(const	std::vector<std::string>&	rowOfData);
 	bool	loadFromURL(std::string	url);
 	bool	loadFromFile(std::string	filename);
-	int		getNumRows()	const;
+	int		getNumRows()	const { return (int)m_rows.size(); }
 	bool	getRow(int	rowNum, std::vector<std::string>&	row)	const;
 	int		search(const	std::vector<SearchCriterion>&	searchCriteria,
 		const	std::vector<SortCriterion>&	sortCriteria,
@@ -46,6 +49,9 @@ private:
 	//	private	and	do	not	implement	them.	
 	Database(const	Database&	other);
 	Database&	operator=(const	Database&	rhs);
+	std::vector<FieldDescriptor*> m_schema;
 	std::vector<std::vector<std::string> > m_rows;
-	std::vector<MultiMap> m_fieldIndex;
+	std::vector<MultiMap*> m_fieldIndex;
 };
+
+#endif //DATABASE included

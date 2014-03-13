@@ -14,7 +14,11 @@ private:
 			m_next = nullptr;
 			m_prev = nullptr;
 		}
-		~ValueNode() {};
+		~ValueNode()
+		{
+			if (m_next)
+				delete m_next;
+		}
 
 		unsigned int m_value;
 		ValueNode* m_next;
@@ -33,16 +37,7 @@ private:
 		}
 		~Node()
 		{
-			if (m_duplicates)
-			{
-				ValueNode* cur = m_duplicates;
-				while (cur)
-				{
-					ValueNode* temp = cur;
-					cur = m_duplicates->m_next;
-					delete temp;
-				}
-			}
+			delete m_duplicates;
 		}
 
 		std::string  m_key;
@@ -68,9 +63,15 @@ public:
 		}
 
 		//accessors
-		std::string	 getKey()		 const { return m_cur->m_key; }
-		unsigned int getValue()		 const;
-		bool		 valid()		 const;
+		std::string	 getKey()   const { return m_cur->m_key; }
+		unsigned int getValue() const { return m_ValueNode->m_value; }
+		bool		 valid()    const
+		{
+			if (!m_cur) //invalid
+				return false;
+			else //valid
+				return true;
+		}
 
 		//mutators
 		bool next();
@@ -84,13 +85,10 @@ public:
 	MultiMap()
 	{
 		m_root = nullptr;
-		isBegin = true;
-		isEnd = true;
 	}
 	~MultiMap()
 	{
 		clear();
-		delete m_root;
 	}
 
 	//mutators
@@ -108,26 +106,18 @@ private:
 	MultiMap(const	MultiMap&	other);
 	MultiMap&	operator=(const	MultiMap&	rhs);
 	Node* m_root;
-	bool isBegin;
-	bool isEnd;
 
 	void FreeTree(Node* root)
 	{
-		if(!root)
+		if(root == nullptr)
 			return;
 
 		//deleting m_left and m_right
 		FreeTree(root->m_left);
 		FreeTree(root->m_right);
 
-		//deleting m_duplicates
-		while (root->m_duplicates != nullptr)
-		{
-			ValueNode* temp = root->m_duplicates->m_next;
-			delete root->m_duplicates;
-			root->m_duplicates = temp;
-		}
+		delete root;
 	}
 };
 
-#endif
+#endif //MULTI_MAP included

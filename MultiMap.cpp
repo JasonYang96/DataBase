@@ -3,21 +3,9 @@ using namespace std;
 
 //Iterator Implementation
 
-unsigned int MultiMap::Iterator::getValue()	const 
-{
-	return m_ValueNode->m_value;
-}
-
-bool MultiMap::Iterator::valid() const
-{
-	if (!m_cur)
-		return false;
-	else
-		return true;
-}
-
 bool MultiMap::Iterator::next()
 {
+	//checking if valid
 	if (!valid())
 		return false;
 
@@ -40,11 +28,13 @@ bool MultiMap::Iterator::next()
 			}
 		}
 
+		//set value
 		m_ValueNode = m_cur->m_duplicates;
 	}
 	//go to ancestor node
 	else
 	{
+		//looking for first parent whose left child is cur
 		while (m_cur->m_parent != nullptr && m_cur->m_parent->m_left != m_cur)
 		{
 			m_cur = m_cur->m_parent;
@@ -62,6 +52,7 @@ bool MultiMap::Iterator::next()
 		//m_cur is now on node before next node
 		m_cur = m_cur->m_parent;
 
+		//set value
 		m_ValueNode = m_cur->m_duplicates;
 	}
 
@@ -70,6 +61,7 @@ bool MultiMap::Iterator::next()
 
 bool MultiMap::Iterator::prev()
 {
+	//checking if valid
 	if (!valid())
 		return false;
 
@@ -92,6 +84,7 @@ bool MultiMap::Iterator::prev()
 			}
 		}
 
+		//set value
 		m_ValueNode = m_cur->m_duplicates;
 		while (m_ValueNode->m_next)
 		{
@@ -101,6 +94,7 @@ bool MultiMap::Iterator::prev()
 	//go to ancestor node
 	else
 	{
+		//looking for first parent whose right child is cur
 		while (m_cur->m_parent != nullptr && m_cur->m_parent->m_right != m_cur)
 		{
 			m_cur = m_cur->m_parent;
@@ -118,6 +112,7 @@ bool MultiMap::Iterator::prev()
 		//m_cur is now on node before next node
 		m_cur = m_cur->m_parent;
 
+		//set value
 		m_ValueNode = m_cur->m_duplicates;
 		while (m_ValueNode->m_next)
 		{
@@ -132,6 +127,7 @@ bool MultiMap::Iterator::prev()
 
 void MultiMap::insert(string key, unsigned int value)
 {
+	//if empty, insert root node
 	if (!m_root)
 	{
 		m_root = new Node(key, value);
@@ -141,8 +137,10 @@ void MultiMap::insert(string key, unsigned int value)
 	Node* cur = m_root;
 	for (;;)
 	{
+		//if key already exists
 		if (key == cur->m_key)
 		{
+			//add ValueNode*
 			ValueNode* temp = cur->m_duplicates;
 			while (temp->m_next)
 			{
@@ -154,10 +152,12 @@ void MultiMap::insert(string key, unsigned int value)
 		}
 		else if (key < cur->m_key)
 		{
+			//traverse left child
 			if (cur->m_left != nullptr)
 			{
 				cur = cur->m_left;
 			}
+			//if not there, create left child
 			else
 			{
 				cur->m_left = new Node(key, value);
@@ -167,10 +167,12 @@ void MultiMap::insert(string key, unsigned int value)
 		}
 		else if (key > cur->m_key)
 		{
+			//traverse right child
 			if (cur->m_right != nullptr)
 			{
 				cur = cur->m_right;
 			}
+			//if not there, create right child
 			else
 			{
 				cur->m_right = new Node(key, value);
@@ -187,6 +189,7 @@ MultiMap::Iterator MultiMap::findEqual(string key) const
 	Iterator prev;
 	while (temp.valid())
 	{
+		//check prev node
 		temp.prev();
 		if (temp.valid())
 		{
@@ -200,6 +203,7 @@ MultiMap::Iterator MultiMap::findEqual(string key) const
 		}
 		if (temp.getKey() == key)
 		{
+			//making sure points to first ValueNode*
 			if (prev.valid() && temp.getKey() == prev.getKey())
 			{
 				temp.prev();
@@ -227,6 +231,7 @@ MultiMap::Iterator	MultiMap::findEqualOrSuccessor(string key) const
 	Iterator next;
 	while (temp.valid())
 	{
+		//checking next Node
 		temp.next();
 		if (temp.valid())
 		{
@@ -240,6 +245,7 @@ MultiMap::Iterator	MultiMap::findEqualOrSuccessor(string key) const
 		}
 		if (next.valid() && temp.getKey() == key)
 		{
+			//checking prev Node
 			temp.prev();
 			if (temp.valid())
 			{
@@ -251,6 +257,7 @@ MultiMap::Iterator	MultiMap::findEqualOrSuccessor(string key) const
 				temp = prev;
 				prev.prev();
 			}
+			//making sure points to first ValueNode*
 			if (prev.valid() && temp.getKey() == prev.getKey())
 			{
 				temp.prev();
@@ -261,6 +268,7 @@ MultiMap::Iterator	MultiMap::findEqualOrSuccessor(string key) const
 		else if (key > temp.getKey())
 		{
 			temp.next();
+			//make sure returns successor
 			if (temp.getKey() > key)
 			{
 				return temp;
@@ -270,12 +278,15 @@ MultiMap::Iterator	MultiMap::findEqualOrSuccessor(string key) const
 		{
 			Iterator after = temp;
 			temp.prev();
+			//make sure return predecesor
 			if (temp.getKey() < key)
 			{
 				return after;
 			}
 		}
 	}
+
+	//if not found, return invalid Iterator
 	Iterator invalid;
 	return invalid;
 }
@@ -287,6 +298,7 @@ MultiMap::Iterator MultiMap::findEqualOrPredecessor(string key)	const
 	Iterator next;
 	while (temp.valid())
 	{
+		//checking next Node
 		temp.next();
 		if (temp.valid())
 		{
@@ -300,7 +312,7 @@ MultiMap::Iterator MultiMap::findEqualOrPredecessor(string key)	const
 		}
 		if (temp.getKey() == key)
 		{
-			//make sure last node;
+			//make sure last ValueNode*
 			if (next.valid() && temp.getKey() == next.getKey())
 			{
 				temp.next();
@@ -312,6 +324,7 @@ MultiMap::Iterator MultiMap::findEqualOrPredecessor(string key)	const
 		{
 			Iterator before = temp;
 			temp.next();
+			//make sure return predecessor
 			if (temp.getKey() > key)
 			{
 				return before;
@@ -319,6 +332,7 @@ MultiMap::Iterator MultiMap::findEqualOrPredecessor(string key)	const
 		}
 		else if (key < temp.getKey())
 		{
+			//check prev ValueNode*
 			temp.prev();
 			if (temp.valid())
 			{
@@ -336,79 +350,8 @@ MultiMap::Iterator MultiMap::findEqualOrPredecessor(string key)	const
 			}
 		}
 	}
+
+	//if not found, return invalid Iterator
 	Iterator invalid;
 	return invalid;
 }
-//
-//{
-//	Iterator temp(m_root);
-//	Iterator prev;
-//	Iterator next;
-//	while (temp.valid())
-//	{
-//		temp.prev();
-//		if (temp.valid())
-//		{
-//			prev = temp;
-//			temp.next();
-//		}
-//		else
-//		{
-//			Iterator invalid;
-//			return invalid;
-//		}
-//		if (prev.valid() && temp.getKey() == key)
-//		{
-//			temp.next();
-//			if (temp.valid())
-//			{
-//				next = temp;
-//				temp.prev();
-//			}
-//			else
-//			{
-//				Iterator invalid;
-//				return invalid;
-//			}
-//			if (next.valid() && temp.getKey() == next.getKey())
-//			{
-//				temp.next();
-//			}
-//			else
-//				return temp;
-//		}
-//		else if (key > temp.getKey())
-//		{
-//			Iterator before = temp;
-//			temp.next();
-//			if (!temp.valid())
-//			{
-//				temp = before;
-//				return temp;
-//			}
-//			if (temp.getKey() > key)
-//			{
-//				return before;
-//			}
-//		}
-//		else if (key < temp.getKey())
-//		{
-//			temp.prev();
-//			if (temp.getKey() < key)
-//			{
-//				temp.next();
-//				next = temp;
-//				temp.prev();
-//				
-//				if (next.valid() && temp.getKey() == next.getKey())
-//				{
-//					temp.prev();
-//				}
-//				else
-//					return temp;
-//			}
-//		}
-//	}
-//	Iterator invalid;
-//	return invalid;
-//}
